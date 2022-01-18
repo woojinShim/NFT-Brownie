@@ -3,6 +3,7 @@ from metadata import sample_metadata
 from scripts.helpful_scripts import get_breed
 from pathlib import Path
 import os
+import requests
 
 
 def main():
@@ -35,7 +36,23 @@ def write_metadata(number_of_tokens, nft_contract):
             collectible_metadata["description"] = "An adorable {} pup!".format(
                 collectible_metadata["name"]
             )
-            print(collectible_metadata)
+
             image_to_upload = None
+            # ipfs에 업로드하기 위한 이미지 파일 선택
             if os.getenv("UPLOAD_IPFS") == "true":
-                print("hello!")
+                image_path = "./img/{}.png".format(breed.lower().replace("_", "-"))
+                image_to_upload = upload_to_ipfs(image_path)
+
+
+# http://127.0.0.1:5001
+# curl -X POST -F file=@img/pug.png http://localhost:5001/api/v0/add
+
+
+def upload_to_ipfs(filepath):
+    with Path(filepath).open("rb") as fp:
+        image_binary = fp.read()
+        ipfs_url = "http://localhost:5001"
+        response = requests.post(ipfs_url + "/api/v0/add", files={"file": image_binary})
+        ipfs_hash = response.json()["Hash"]
+        filename = filepath.split("/")[-1:][0]
+        print(filename)

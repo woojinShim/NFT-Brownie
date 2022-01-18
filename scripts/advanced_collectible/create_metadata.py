@@ -4,6 +4,7 @@ from scripts.helpful_scripts import get_breed
 from pathlib import Path
 import os
 import requests
+import json
 
 
 def main():
@@ -42,6 +43,11 @@ def write_metadata(number_of_tokens, nft_contract):
             if os.getenv("UPLOAD_IPFS") == "true":
                 image_path = "./img/{}.png".format(breed.lower().replace("_", "-"))
                 image_to_upload = upload_to_ipfs(image_path)
+            collectible_metadata["image"] = image_to_upload
+            with open(metadata_file_name, "w") as file:
+                json.dump(collectible_metadata, file)
+            if os.getenv("UPLOAD_IPFS") == "true":
+                upload_to_ipfs(metadata_file_name)
 
 
 # http://127.0.0.1:5001
@@ -55,4 +61,7 @@ def upload_to_ipfs(filepath):
         response = requests.post(ipfs_url + "/api/v0/add", files={"file": image_binary})
         ipfs_hash = response.json()["Hash"]
         filename = filepath.split("/")[-1:][0]
-        print(filename)
+        uri = "https://ipfs.io/ipfs/{}?filename={}".format(ipfs_hash, filename)
+        print(uri)
+        return uri
+    return None
